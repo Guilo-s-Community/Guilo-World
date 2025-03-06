@@ -4,7 +4,6 @@
 #include <string.h>
 #define TAM 20
 
-// ARQUIVO BINÁRIO PARA CARREGAR/SALVAR A LISTA
 const char *ARQUIVO_CADASTRO = "cadastro.txt";
 const char *ARQUIVO_SEGURANCA = "senha.txt";
 
