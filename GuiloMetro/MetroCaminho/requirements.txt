@@ -1,0 +1,4 @@
+neo4j==5.28.1
+python-dotenv==1.1.0
+logger_util==0.3.0
+pandas==2.2.3
