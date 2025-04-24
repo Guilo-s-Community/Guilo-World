@@ -1,9 +1,19 @@
 defmodule Httpserver.SyncTime do
-  import Plug.Conn
+  use Plug.Router
 
-  def init(options), do: options
+  plug :match
+  plug :dispatch
 
-  def call(conn, _opts) do
-    send_resp(put_resp_content_type(conn, "text/plain"), 200, "Página para sincronização do tempo com relógio de berkeley\n")
+  get "/" do
+    send_resp(conn, 200, "Bendo")
+  end
+
+  get"/:name" do
+    send_resp(conn, 200, "Vendo #{name}")
+  end
+
+
+  match _ do
+    send_resp(conn, 404, "Ta erro")
   end
 end
