@@ -1,0 +1,80 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbit
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dist-net
+  server-java:
+    build:
+      context: ../server-java/server/server
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - dist-net
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+    command: ["java", "-jar", "server.jar"]
+    deploy:
+      mode: replicated
+      replicas: 3
+
+  xhost:
+    image: ubuntu:22.04
+    entrypoint: >
+      bash -c "apt-get update && apt-get install -y x11-xserver-utils && xhost +local:docker && tail -f /dev/null"
+    network_mode: host
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+    restart: "no"
+
+  client-python:
+    build:
+      context: ../client
+    command: ["python", "cliente.py"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - dist-net
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - ../client/logs:/app/logs
+    deploy:
+      mode: replicated
+      replicas: 5
+
+
+  broker-js:
+    build:
+      context: ../broker-js
+      dockerfile: Dockerfile
+    # Aponte para o .env que está em ../client/.env e monte-o no container
+    env_file:
+      - ../client/.env
+    volumes:
+      - ../broker-js:/app
+      - ../client/.env:/app/.env:ro
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - dist-net
+
+networks:
+  dist-net:
+    driver: bridge
